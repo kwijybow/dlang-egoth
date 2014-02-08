@@ -54,6 +54,27 @@ class Tree {
     }
 }
 
+int iterate (ref Tree t, int d) {
+    ulong nodes = 0;
+    int score;
+    StopWatch timer;
+    double runtime;
+    
+    for (int n=1; n<d; n++) {
+        t.nodes_searched = 0;
+        t.leaves_searched = 0;
+        writef("pvsSearch(%2d)", n);
+        timer.start();
+        score = pvsSearch(t,-128,128,n,t.pos.side_to_move,false);
+        nodes = t.nodes_searched;
+        t.pos.sortMoves();
+        timer.stop();
+        writef(" move %4s",t.pos.move_list[t.pos.position_index][0].sq_name);
+        runtime = (timer.peek().msecs/1000.0);
+        writefln("%5d score %12d nodes in %8.2f seconds for %12.0f nodes/sec",t.pos.move_list[t.pos.position_index][0].score, nodes, runtime, (nodes/runtime));
+    }    
+    return score;
+}
 
 int pvsSearch (ref Tree tree, int alpha, int beta, int depth, int ctm, bool passed) {
     int score;
