@@ -19,6 +19,8 @@ class Tree {
     double runtime;
     enum neginf = -128;
     enum posinf = 128;
+    enum badsquare = 64;
+    enum passmove = 99;
     
     this(Position search_position) {
         pos = new Position;
@@ -26,6 +28,11 @@ class Tree {
             pos.num_moves[i] = search_position.num_moves[i];
             for (int j=0; j<128; j++)
                 pos.move_list[j][i] = search_position.move_list[j][i];
+        }
+        for (int i=0; i<128; i++) {
+            pos.killer1[i] = 64;
+            pos.killer2[i] = 64;
+            pos.hashmove[i] = 64;
         }
         pos.position_index = search_position.position_index;
         pos.passed = search_position.passed;
@@ -66,7 +73,7 @@ int pvsSearch (ref Tree tree, int alpha, int beta, int depth, int ctm, bool pass
         tree.pos.makePass();
         score = -pvsSearch(tree, -beta, -alpha, depth, (ctm^1), true);
         tree.pos.unmakePass();
-        tree.pos.move_list[tree.pos.position_index][0].sq_num = 99;
+        tree.pos.move_list[tree.pos.position_index][0].sq_num = tree.passmove;
         tree.pos.move_list[tree.pos.position_index][0].score = score;
     }  
     else {
@@ -87,8 +94,11 @@ int pvsSearch (ref Tree tree, int alpha, int beta, int depth, int ctm, bool pass
             }
             if (score > alpha)
                 alpha = score;
-            if (alpha >= beta)
+            if (alpha >= beta) {
+                tree.pos.killer2[tree.pos.position_index] = tree.pos.killer1[tree.pos.position_index];
+                tree.pos.killer1[tree.pos.position_index] = tree.pos.move_list[tree.pos.position_index][m].sq_num;
                 break; // add killer move
+            }    
         }
     }
 //    tree.pos.printMoveList();

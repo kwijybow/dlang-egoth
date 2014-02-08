@@ -21,7 +21,12 @@ class Position {
     Square s_test;
     Rays ray_list;
     ulong hashkey;
-    Move spare_move;    
+    Move spare_move;
+    int killer1[128];
+    int killer2[128];
+    int hashmove[128];
+    enum killer1_bonus = 528;
+    enum killer2_bonus = 256;
     
     this() {
         for (int i=0; i<64; i++) {
@@ -29,6 +34,11 @@ class Position {
             for (int j=0; j<128; j++)
                 move_list[j][i] = new Move();
         }
+        for (int i=0; i<128; i++) {
+            killer1[i] = 64;
+            killer2[i] = 64;
+            hashmove[i] = 64;
+        }        
         position_index = 0;
         passed = false;
         black_stones = 0;
@@ -146,6 +156,11 @@ class Position {
                 move_list[position_index][move_index].mask = (one << fromsq);
                 move_list[position_index][move_index].flips = some_flips;
                 move_list[position_index][move_index].score = sqs.see_value(fromsq);
+                if (fromsq == killer1[position_index])
+                    move_list[position_index][move_index].score += killer1_bonus;
+                else 
+                    if (fromsq == killer2[position_index])
+                        move_list[position_index][move_index].score += killer2_bonus;
                 move_index += 1;
             }
         }
