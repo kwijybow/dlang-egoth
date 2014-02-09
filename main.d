@@ -21,6 +21,7 @@ void main (char[][] args) {
     
     InitializeRandomHash();
     InitializeHashTables();
+    hash_maska=(1<<log_hash)-1;
 
     p.startBoard();
     if (args.length > 1)

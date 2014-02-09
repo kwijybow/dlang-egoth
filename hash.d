@@ -1,4 +1,6 @@
 import std.stdio, std.string, std.array, std.datetime, std.conv;
+import position;
+import bitboard;
 
 
 struct hash_entry {
@@ -6,12 +8,16 @@ struct hash_entry {
   ulong word2;
 };
 
-static uint hash_table_size = 65535;
-static hash_entry trans_ref_wa[65536];
-static hash_entry trans_ref_ba[65536];
+static uint hash_table_size = 524288;
+static hash_entry trans_ref_wa[524289];
+static hash_entry trans_ref_ba[524289];
 static ulong w_stone_random[64];
 static ulong b_stone_random[64];
-byte transposition_id;
+static byte transposition_id;
+static int hash_maska;
+static int log_hash = 19;
+static ulong allOnes = 18446744073709551615UL;
+static uint allones = 4294967295;
 
 
 /*
@@ -98,69 +104,103 @@ void InitializeHashTables()
     trans_ref_ba[i].word2 = 0;
 }
 
-/*
-void HashStore (game_position *sp, int ctm, int type, float value, int ply, int depth, int move)
-{
-    register HASH_ENTRY *htablea;
-    register BITBOARD word1, word2;
-    register int draft, age, word1l, word1r;
 
-    word1l = ((int) transposition_id<<29);
+void hashStore (ref Position sp, int ctm, int type, int value, int ply, int depth, int move)
+{
+    ulong word1, word2, index;
+    uint draft, age, word1l, word1r;
+    
+    
+    word1l = ((to!int(transposition_id))<<29);
     word1l |= move<<16;
     word1l |= (((depth<<2)+type)&65535);
     word1r=value;
-    word1=value + ((BITBOARD) word1l<<32);
-    word2=sp->hashkey;
-
-    htablea=((ctm) ? trans_ref_wa:trans_ref_ba)+(((int) sp->hashkey) & hash_maska);
-    draft=((int) (htablea->word1>>34));
-    age=htablea->word1>>61;
-    age=age && (age!=transposition_id);
-    if (age || (depth>=draft)) {
-        htablea->word1 = word1;
-        htablea->word2 = word2;
-    }
-}
-
-int HashProbe (game_position *sp, int ctm, float *alpha, float *beta, int ply, int depth, int *move)
-{
-    register BITBOARD word1, word2;
-    register HASH_ENTRY *htable;
-    register int type, draft, word1l, word1r;
-    register float val;
-
-    htable=((ctm)?trans_ref_wa:trans_ref_ba)+(((int) sp->hashkey) & hash_maska);
-        word1 = htable->word1;
-        word2 = htable->word2;
-
-    if (word2 == sp->hashkey) {
-        word1l = word1>>32;
-        word1r = word1 & all_ones;
-        val = word1r;
-        *move = (word1l>>16)&255;
-        draft = (word1l&65535)>>2;
-        type = (word1l) & 03;
-        if (depth>draft) return(WORTHLESS);
-       
-
-        switch (type) {
-        case EXACT:
-            *alpha=val;
-            return(EXACT);
-        case UPPER:
-            if (val <= *alpha) {
-               *alpha=val;
-               return(UPPER);
-            }
-            return(WORTHLESS);
-        case LOWER:
-            if (val >= *beta) {
-                *beta=val;
-                return(LOWER);
-            }
-            return(WORTHLESS);
+    word1=((to!ulong(word1l))<<32) | (word1r);
+    word2=sp.hashkey;
+    index = sp.hashkey & hash_maska;
+//    writeln(index);
+    if (ctm == 1) {
+        draft = trans_ref_ba[index].word1>>34;
+        age = trans_ref_ba[index].word1>>61;
+        age=age && (age!=transposition_id);
+        if (age || (depth>=draft)) {
+//            writeln("got here");
+            trans_ref_ba[index].word1 = word1;
+            trans_ref_ba[index].word2 = word2;
         }
     }
-    return(WORTHLESS);
+    else {
+        draft = trans_ref_wa[index].word1>>34;
+        age = trans_ref_wa[index].word1>>61;
+        age=age && (age!=transposition_id);
+        if (age || (depth>=draft)) {
+//            writeln("got here");
+            trans_ref_wa[index].word1 = word1;
+            trans_ref_wa[index].word2 = word2;
+        }
+    }
+//    writeln("storing move,value,type,ply,depth,index ",move,",", value,",",type,",",ply,",",depth,",",index);
+//    writeln("word1",word1);
 }
-*/     
+
+int hashProbe (ref Position sp, int ctm, ref int alpha, ref int beta, int ply, int depth, ref int move)
+{
+    ulong word1, word2, index;
+    uint type, draft, word1l, word1r;
+    int val;
+    
+
+    index = sp.hashkey & hash_maska;
+    if (ctm == 1) {
+        word1 = trans_ref_ba[index].word1;
+        word2 = trans_ref_ba[index].word2;
+    } 
+    else {
+        word1 = trans_ref_wa[index].word1;
+        word2 = trans_ref_wa[index].word2;
+    }    
+    if (word2 == sp.hashkey) {
+//        DisplayBitBoard(word1);
+//        writeln;
+        word1l = word1>>32;
+//        DisplayBitBoard(to!ulong(word1l));
+//        writeln;
+//        DisplayBitBoard(word1);
+//        writeln;
+        word1r = word1 & allones;
+//        DisplayBitBoard(to!ulong(word1r));
+//        writeln;
+        val = word1r;
+        move = (word1l>>16)&255;
+//        DisplayBitBoard(to!ulong(move));
+//        writeln;
+        draft = (word1l&65535)>>2;
+        type = (word1l) & 03;
+//        writeln("retrieving move,value,type,ply,depth,draft,index ",move,",", val,",",type,",",ply,",",depth,",",draft,",",index);
+//        writeln("word1 ",word1);
+        
+        if (depth>draft) return(0);
+       
+        switch (type) {
+        case 3:
+            alpha=val;
+            return(3);
+        case 2:
+            if (val <= alpha) {
+               alpha=val;
+               return(2);
+            }
+            return(1);
+        case 1:
+            if (val >= beta) {
+                beta=val;
+                return(1);
+            }
+            return(0);
+        default: 
+            return(0);
+        }
+    }
+    return(0);
+}
+    

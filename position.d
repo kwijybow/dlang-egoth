@@ -6,6 +6,7 @@ import squares;
 import square;
 import flips;
 import rays;
+import hash;
 
 class Position {
     enum white = 0;
@@ -25,6 +26,7 @@ class Position {
     int killer1[128];
     int killer2[128];
     int hashmove[128];
+    enum hashmove_bonus = 1024;
     enum killer1_bonus = 528;
     enum killer2_bonus = 256;
     
@@ -60,10 +62,14 @@ class Position {
         j = (sq_name[1] - '1');
         sq_num = i + j;
 
-        if (side == black)
+        if (side == black) {
             black_stones = set(black_stones,(one<<sq_num));
-        else
+            hashkey ^= b_stone_random[sq_num];
+        }
+        else {
             white_stones = set(white_stones,(one<<sq_num));
+            hashkey ^= w_stone_random[sq_num];
+        }
     }
 
     void startBoard() {
@@ -75,15 +81,33 @@ class Position {
     
     void makeMove(Move move) {
         ulong stones_to_change;
+        ulong tmpflips;
+        int sq_num;
   
         stones_to_change = (move.mask | move.flips);
         if (side_to_move == black) {
             black_stones |= stones_to_change;
             white_stones ^= move.flips;
+            hashkey ^= b_stone_random[move.sq_num];
+            tmpflips = move.flips;
+            while (tmpflips) {
+                sq_num = bsf(tmpflips);
+                tmpflips &= tmpflips - 1;
+                hashkey ^= b_stone_random[sq_num];
+                hashkey ^= w_stone_random[sq_num];
+            }            
         }
         else {
             white_stones |= stones_to_change;
             black_stones ^= move.flips;
+            hashkey ^= w_stone_random[move.sq_num];
+            tmpflips= move.flips;
+            while (tmpflips) {
+                sq_num = bsf(tmpflips);
+                tmpflips &= tmpflips - 1;
+                hashkey ^= w_stone_random[sq_num];
+                hashkey ^= b_stone_random[sq_num];
+            }
         }
         side_to_move ^= 1;
         position_index += 1;
@@ -91,15 +115,33 @@ class Position {
 
     void unmakeMove(Move move) {
         ulong stones_to_change;
+        ulong tmpflips;
+        int sq_num;
   
         stones_to_change = (move.mask | move.flips);
         if (side_to_move == black) {
             black_stones |= move.flips;
             white_stones ^= stones_to_change;
+            hashkey ^= w_stone_random[move.sq_num];
+            tmpflips = move.flips;
+            while (tmpflips) {
+                sq_num = bsf(tmpflips);
+                tmpflips &= tmpflips - 1;
+                hashkey ^= w_stone_random[sq_num];
+                hashkey ^= b_stone_random[sq_num];
+            } 
         }
         else {
             white_stones |= move.flips;
             black_stones ^= stones_to_change;
+            hashkey ^= b_stone_random[move.sq_num];
+            tmpflips = move.flips;
+            while (tmpflips) {
+                sq_num = bsf(tmpflips);
+                tmpflips &= tmpflips - 1;
+                hashkey ^= b_stone_random[sq_num];
+                hashkey ^= w_stone_random[sq_num];
+            }
         }
         side_to_move ^= 1;
         position_index -= 1;
@@ -161,6 +203,8 @@ class Position {
                 else 
                     if (fromsq == killer2[position_index])
                         move_list[position_index][move_index].score += killer2_bonus;
+                if (fromsq == hashmove[position_index])
+                    move_list[position_index][move_index].score += hashmove_bonus;
                 move_index += 1;
             }
         }

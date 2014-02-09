@@ -4,7 +4,7 @@ import move;
 import squares;
 import square;
 import rays;
-
+import hash;
 
 class Tree {
     Position pos;
@@ -60,6 +60,9 @@ int iterate (ref Tree t, int d) {
     StopWatch timer;
     double runtime;
     
+     transposition_id=(transposition_id+1)&7;
+     if (!transposition_id) transposition_id++;
+    
     for (int n=1; n<d; n++) {
         t.nodes_searched = 0;
         t.leaves_searched = 0;
@@ -78,8 +81,29 @@ int iterate (ref Tree t, int d) {
 
 int pvsSearch (ref Tree tree, int alpha, int beta, int depth, int ctm, bool passed) {
     int score;
+    int orig_alpha = alpha;
+    int best_move = 99;
+    int testalpha,testbeta;
 
-
+//    hashProbe(tree.pos,ctm,alpha,beta,tree.pos.position_index,depth,tree.pos.hashmove[tree.pos.position_index]);
+    
+    
+    switch (hashProbe(tree.pos,ctm,alpha,beta,tree.pos.position_index,depth,tree.pos.hashmove[tree.pos.position_index])) {
+        case 3:
+//            writeln(tree.pos.hashmove[tree.pos.position_index],",",alpha,",",beta,",",3);
+            return(alpha);
+        case 1:
+//            writeln(tree.pos.hashmove[tree.pos.position_index],",",alpha,",",beta,",",1);
+            return(beta);
+        case 2:
+//            writeln(tree.pos.hashmove[tree.pos.position_index],",",alpha,",",beta,",",2);
+            return(alpha);
+	default:
+//	    writeln(tree.pos.hashmove[tree.pos.position_index],",",alpha,",",beta,",",0);
+	    break;
+    }
+    
+    
     tree.nodes_searched++;
     if (depth == 0) {
         tree.leaves_searched++;
@@ -115,14 +139,25 @@ int pvsSearch (ref Tree tree, int alpha, int beta, int depth, int ctm, bool pass
             }
             if (score > alpha)
                 alpha = score;
+                best_move = tree.pos.move_list[tree.pos.position_index][m].sq_num;
             if (alpha >= beta) {
+                best_move = tree.pos.move_list[tree.pos.position_index][m].sq_num;
                 tree.pos.killer2[tree.pos.position_index] = tree.pos.killer1[tree.pos.position_index];
                 tree.pos.killer1[tree.pos.position_index] = tree.pos.move_list[tree.pos.position_index][m].sq_num;
-                break; // add killer move
+                hashStore(tree.pos,ctm,1,score,tree.pos.position_index,depth,best_move);
+//                hashProbe(tree.pos,ctm,alpha,beta,tree.pos.position_index,depth,best_move);
+                break;
             }    
         }
     }
-//    tree.pos.printMoveList();
+    if ((alpha == orig_alpha) && (best_move < 64)) {
+        hashStore(tree.pos,ctm,3,alpha,tree.pos.position_index,depth,best_move);
+//        hashProbe(tree.pos,ctm,alpha,beta,tree.pos.position_index,depth,best_move);
+    }    
+    else if (best_move < 64) {
+        hashStore(tree.pos,ctm,2,alpha,tree.pos.position_index,depth,best_move);
+//        hashProbe(tree.pos,ctm,alpha,beta,tree.pos.position_index,depth,best_move);
+    }    
     return alpha;
 }
 /*
