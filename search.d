@@ -1,10 +1,11 @@
-import std.stdio, std.string, std.array, std.datetime;
+import std.stdio, std.string, std.array, std.datetime, std.conv;
 import position;
 import move;
 import squares;
 import square;
 import rays;
 import hash;
+import bitboard;
 
 class Tree {
     Position pos;
@@ -17,6 +18,9 @@ class Tree {
     Move  best_move;
     StopWatch timer;
     double runtime;
+    double time_for_game = 1800.0;
+    double game_time_used = 0.0;
+    int moves_left = 60;
     enum neginf = -128;
     enum posinf = 128;
     enum badsquare = 64;
@@ -51,19 +55,29 @@ class Tree {
         best_score = 0;
         best_move = new Move;
         runtime = 0.0;
+        moves_left = PopCnt(~(search_position.white_stones | search_position.black_stones));
     }
 }
 
-int iterate (ref Tree t, int d) {
+int iterate (ref Tree t) {
     ulong nodes = 0;
     int score;
+    bool keepgoing = true;
+    double search_time;
+    double target_time;
+    int n = 1;
     StopWatch timer;
     double runtime;
     
-     transposition_id=(transposition_id+1)&7;
-     if (!transposition_id) transposition_id++;
-    
-    for (int n=1; n<d; n++) {
+    transposition_id=(transposition_id+1)&7;
+    if (!transposition_id) transposition_id++;
+    t.moves_left = PopCnt(~(t.pos.white_stones | t.pos.black_stones));
+    search_time = 0.0;
+    target_time = (t.time_for_game - t.game_time_used)/((to!float(t.moves_left))*1.5);
+    writefln("target time = %8.2f",target_time);
+     
+     
+    while (keepgoing) {
         t.nodes_searched = 0;
         t.leaves_searched = 0;
         writef("pvsSearch(%2d)", n);
@@ -74,7 +88,11 @@ int iterate (ref Tree t, int d) {
         timer.stop();
         writef(" move %4s",t.pos.move_list[t.pos.position_index][0].sq_name);
         runtime = (timer.peek().msecs/1000.0);
+        search_time += runtime;
         writefln("%5d score %12d nodes in %8.2f seconds for %12.0f nodes/sec",t.pos.move_list[t.pos.position_index][0].score, nodes, runtime, (nodes/runtime));
+        timer.reset();
+        keepgoing = (search_time < target_time);
+        n++;
     }    
     return score;
 }

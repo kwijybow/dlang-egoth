@@ -9,6 +9,9 @@ class Square {
         ulong adj_mask;
         ulong att_mask;
         int see_value;
+        int stone;
+        int row;
+        int col;
         
     int see[64] = [
        120,-20,20, 5, 5,20,-20,120, 
@@ -115,6 +118,9 @@ class Square {
         adj_mask = 0;
         att_mask = 0;
         see_value = 0;
+        row = 0;
+        col = 0;
+        stone = 0;
     }
 
     this(int num, string name) {
@@ -125,12 +131,17 @@ class Square {
         adj_mask = genAdjMask(mask);
         att_mask = genAttMask(mask);
         see_value = see[num];
+        row = num/8;
+        col = num%8;
+        stone = 0;
     }
     
     void printSquare() {
         writeln("Square");
         writeln("square as follows");
         writeln("sq_num ", sq_num, " name ", sq_name);
+        writeln("row ", row, "col ", col);
+        writeln("see value", see_value);
         writeln("mask");
         DisplayBitBoard(mask);
         writeln("adj_mask");

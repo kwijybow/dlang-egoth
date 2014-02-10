@@ -263,7 +263,7 @@ class Position {
 //            move_list[position_index][m].printMove();
         writeln();
     }       
- 
+/* 
     void printPosition() {
         writeln("POSITION");
         writeln("\nposition index = ", position_index);
@@ -278,7 +278,88 @@ class Position {
         DisplayBitBoard(white_stones);
         writeln();
     } 
-    
+*/
+
+    void updateBoard() {
+        enum e_stone = 0;
+        enum l_stone = 1;
+        enum b_stone = 2;
+        enum w_stone = 4;
+        
+        ulong temp;
+        
+        generateRayMoves();
+        
+        for (int i=0; i<64; i++)
+            sqs.square_list[i].stone = e_stone;
+
+        temp = black_stones;
+        while (temp) {
+            sqs.square_list[bsf(temp)].stone = b_stone;
+            temp &= temp - 1;
+        }
+        temp = white_stones;
+        while (temp) {
+            sqs.square_list[bsf(temp)].stone = w_stone;
+            temp &= temp - 1;
+        }
+        for (int m=0; m<num_moves[position_index]; m++) {
+            sqs.square_list[move_list[position_index][m].sq_num].stone = l_stone;
+        }
+        for (int i=0; i<64; i++)
+            sqs.squares_by_name[sqs.square_list[i].sq_name].stone = sqs.square_list[i].stone;
+    }
+
+    void printPosition () {
+        int i,j;
+        enum e_stone = 0;
+        enum l_stone = 1;
+        enum b_stone = 2;
+        enum w_stone = 4;
+        string name;
+        
+        updateBoard();
+
+        writefln("    a   b   c   d   e   f   g   h     ");
+        writefln("  +---+---+---+---+---+---+---+---+   ");
+        foreach(row; ["1","2","3","4","5","6","7","8"]) {
+            writef("%s ", row);
+            foreach(col; ["a","b","c","d","e","f","g","h"]) {
+                name = col ~ row;
+                switch (sqs.stone(name)) {
+                    case e_stone:
+                        write("|   ");
+                        break;
+                    case l_stone:
+                        write("| * ");
+                        break;
+                    case b_stone:
+                        write("| B ");
+                        break;
+                    case w_stone:
+                        write("| W ");
+                        break;
+                    default:
+                        break;
+                    }
+                }
+            writefln("| %s ", row);
+            writefln("  +---+---+---+---+---+---+---+---+   ");    
+        }
+        writefln("    a   b   c   d   e   f   g   h    ");
+        writef("         ");
+        if (side_to_move == black)
+            write("Black");
+        else
+            write("White");
+        writefln("'s turn to move         ");
+        writef("         ");
+        writefln("  white - black                ");
+        writef("       ");
+        writefln("  %5d - %5d                ",PopCnt(white_stones),PopCnt(black_stones));
+    }
+
+
     ulong perft(int depth, bool passed) {
         int nodes = 0;
         generateRayMoves();
