@@ -16,6 +16,8 @@ bool processCommand (ref Tree t, string command) {
     int d;
     StopWatch timer;
     double runtime;
+    bool found;
+    string move;
     
     auto c = splitter(command);
     if (c.front == "quit") 
@@ -58,7 +60,7 @@ bool processCommand (ref Tree t, string command) {
             write("white (computer) moves ");
         else
             write("black (computer) moves "); 
-        writef("%d, %s, score %d in ",t.pos.move_list[t.pos.position_index-1][0].sq_num, t.pos.move_list[t.pos.position_index-1][0].sq_name, score);
+        writef(" %s, score %d in ", t.pos.move_list[t.pos.position_index-1][0].sq_name, score);
         t.timer.stop();
         t.runtime = (t.timer.peek().msecs/1000.0);
         writefln("%8.2f secs",t.runtime);
@@ -72,6 +74,43 @@ bool processCommand (ref Tree t, string command) {
     }
     if (c.front == "show") {
         t.pos.printPosition();
+        return (false);
+    }
+    if (c.front >= "a1" && c.front <= "h8") {
+        t.pos.generateRayMoves();
+        found = false;
+        for (int m=0; m<t.pos.num_moves[t.pos.position_index]; m++) {
+            if (t.pos.move_list[t.pos.position_index][m].sq_name == c.front) {
+                t.pos.makeMove(t.pos.move_list[t.pos.position_index][m]);
+                if (t.pos.side_to_move == t.pos.black) 
+                    writefln("white (human) moves %s",c.front);
+                else
+                    writefln("black (human) moves %s",c.front); 
+                found = true;
+                break;
+            }
+        }
+        if (!found)
+            writeln("not a legal move");
+        return (false);
+    }
+    if (c.front >= "A1" && c.front <= "H8") {
+        move = toLower(c.front);
+        t.pos.generateRayMoves();
+        found = false;
+        for (int m=0; m<t.pos.num_moves[t.pos.position_index]; m++) {
+            if (t.pos.move_list[t.pos.position_index][m].sq_name == move) {
+                t.pos.makeMove(t.pos.move_list[t.pos.position_index][m]);
+                if (t.pos.side_to_move == t.pos.black) 
+                    writefln("white (human) moves %s",move);
+                else
+                    writefln("black (human) moves %s",move); 
+                found = true;
+                break;
+            }
+        }
+        if (!found)
+            writeln("not a legal move");
         return (false);
     }
     writeln (command,"Command not understood");
