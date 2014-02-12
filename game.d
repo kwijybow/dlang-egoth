@@ -10,6 +10,24 @@ import search;
 import hash;
 
 
+bool processMove (ref Tree t, string move) {
+    bool found = false;
+    
+    t.pos.generateRayMoves();
+    for (int m=0; m<t.pos.num_moves[t.pos.position_index]; m++) {
+        if (t.pos.move_list[t.pos.position_index][m].sq_name == move) {
+            t.pos.makeMove(t.pos.move_list[t.pos.position_index][m]);
+            if (t.pos.side_to_move == t.pos.black) 
+                writefln("white (human) moves %s",move);
+            else
+                writefln("black (human) moves %s",move); 
+            found = true;
+            break;
+            }
+        }
+        return (found);
+}
+
 bool processCommand (ref Tree t, string command) {
     ulong nodes = 0;
     int score;
@@ -77,42 +95,21 @@ bool processCommand (ref Tree t, string command) {
         return (false);
     }
     if (c.front >= "a1" && c.front <= "h8") {
-        t.pos.generateRayMoves();
-        found = false;
-        for (int m=0; m<t.pos.num_moves[t.pos.position_index]; m++) {
-            if (t.pos.move_list[t.pos.position_index][m].sq_name == c.front) {
-                t.pos.makeMove(t.pos.move_list[t.pos.position_index][m]);
-                if (t.pos.side_to_move == t.pos.black) 
-                    writefln("white (human) moves %s",c.front);
-                else
-                    writefln("black (human) moves %s",c.front); 
-                found = true;
-                break;
-            }
-        }
+        found = processMove(t,c.front);
         if (!found)
             writeln("not a legal move");
         return (false);
     }
     if (c.front >= "A1" && c.front <= "H8") {
         move = toLower(c.front);
-        t.pos.generateRayMoves();
-        found = false;
-        for (int m=0; m<t.pos.num_moves[t.pos.position_index]; m++) {
-            if (t.pos.move_list[t.pos.position_index][m].sq_name == move) {
-                t.pos.makeMove(t.pos.move_list[t.pos.position_index][m]);
-                if (t.pos.side_to_move == t.pos.black) 
-                    writefln("white (human) moves %s",move);
-                else
-                    writefln("black (human) moves %s",move); 
-                found = true;
-                break;
-            }
-        }
+        found = processMove(t,move);
         if (!found)
             writeln("not a legal move");
         return (false);
     }
+    
+    
+    
     writeln (command,"Command not understood");
     return(false);
 }

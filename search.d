@@ -103,21 +103,14 @@ int pvsSearch (ref Tree tree, int alpha, int beta, int depth, int ctm, bool pass
     int best_move = 99;
     int testalpha,testbeta;
 
-//    hashProbe(tree.pos,ctm,alpha,beta,tree.pos.position_index,depth,tree.pos.hashmove[tree.pos.position_index]);
-    
-    
     switch (hashProbe(tree.pos,ctm,alpha,beta,tree.pos.position_index,depth,tree.pos.hashmove[tree.pos.position_index])) {
         case 3:
-//            writeln(tree.pos.hashmove[tree.pos.position_index],",",alpha,",",beta,",",3);
             return(alpha);
         case 1:
-//            writeln(tree.pos.hashmove[tree.pos.position_index],",",alpha,",",beta,",",1);
             return(beta);
         case 2:
-//            writeln(tree.pos.hashmove[tree.pos.position_index],",",alpha,",",beta,",",2);
             return(alpha);
 	default:
-//	    writeln(tree.pos.hashmove[tree.pos.position_index],",",alpha,",",beta,",",0);
 	    break;
     }
     
@@ -134,7 +127,7 @@ int pvsSearch (ref Tree tree, int alpha, int beta, int depth, int ctm, bool pass
             return tree.pos.eog_evaluate(ctm);
         }
         tree.pos.makePass();
-        score = -pvsSearch(tree, -beta, -alpha, depth, (ctm^1), true);
+        score = -pvsSearch(tree, -beta, -alpha, depth-1, (ctm^1), true);
         tree.pos.unmakePass();
         tree.pos.move_list[tree.pos.position_index][0].sq_num = tree.passmove;
         tree.pos.move_list[tree.pos.position_index][0].score = score;
@@ -163,35 +156,15 @@ int pvsSearch (ref Tree tree, int alpha, int beta, int depth, int ctm, bool pass
                 tree.pos.killer2[tree.pos.position_index] = tree.pos.killer1[tree.pos.position_index];
                 tree.pos.killer1[tree.pos.position_index] = tree.pos.move_list[tree.pos.position_index][m].sq_num;
                 hashStore(tree.pos,ctm,1,score,tree.pos.position_index,depth,best_move);
-//                hashProbe(tree.pos,ctm,alpha,beta,tree.pos.position_index,depth,best_move);
                 break;
             }    
         }
     }
     if ((alpha == orig_alpha) && (best_move < 64)) {
         hashStore(tree.pos,ctm,3,alpha,tree.pos.position_index,depth,best_move);
-//        hashProbe(tree.pos,ctm,alpha,beta,tree.pos.position_index,depth,best_move);
     }    
     else if (best_move < 64) {
         hashStore(tree.pos,ctm,2,alpha,tree.pos.position_index,depth,best_move);
-//        hashProbe(tree.pos,ctm,alpha,beta,tree.pos.position_index,depth,best_move);
     }    
     return alpha;
 }
-/*
-function pvs(node, depth, α, β, color)
-    if node is a terminal node or depth = 0
-        return color × the heuristic value of node
-    for each child of node
-        if child is not first child
-            score := -pvs(child, depth-1, -α-1, -α, -color)       (* search with a null window *)
-            if α < score < β                                      (* if it failed high,
-                score := -pvs(child, depth-1, -β, -α, -color)        do a full re-search *)
-        else
-            score := -pvs(child, depth-1, -β, -α, -color)
-        α := max(α, score)
-        if α ≥ β
-            break                                            (* beta cut-off *)
-    return α
-
-*/

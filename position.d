@@ -12,7 +12,7 @@ class Position {
     enum white = 0;
     enum black = 1;
     Move move_list[128][64];
-    int num_moves[64];
+    int num_moves[128];
     int position_index;
     bool passed;
     ulong black_stones;
@@ -398,32 +398,18 @@ class Position {
         
         potential = s_test.genAdjMask(white_stones);
         potential ^= black_stones;
-//        DisplayBitBoard(black_stones); 
         black_pot_count = PopCnt(potential);
-//        writeln("black pop count = ",black_pot_count);
         potential = s_test.genAdjMask(black_stones);
         potential ^= white_stones;
         white_pot_count = PopCnt(potential);
         
-//        writeln("bpc - wpc = ",(black_pot_count - white_pot_count));
-//        writeln("bpc + wpc = ",(black_pot_count + white_pot_count));
-//        writeln("value => ",((black_pot_count - white_pot_count)/(black_pot_count + white_pot_count)));
         value = (black_pot_count - white_pot_count)/(black_pot_count + white_pot_count);
         value = value * pot_modifier;
-//        writeln("pot value = ",value);
         score += lround(value); 
-        
-//        black_stone_count = PopCnt(black_stones);
-//        white_stone_count = PopCnt(white_stones);
-//        value = (black_stone_count - white_stone_count)/(black_stone_count + white_stone_count);
-//        value = value * mat_modifier;
-//        score += lround(value);
-        
 
         if (ctm == white) { 
             score = -score;
         }   
-//        writeln("evaluated score = ",score);
         return score;
     }
 
