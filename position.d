@@ -15,6 +15,7 @@ class Position {
     int num_moves[128];
     int position_index;
     bool passed;
+    bool eog;
     ulong black_stones;
     ulong white_stones;
     int side_to_move;

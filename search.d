@@ -48,6 +48,7 @@ class Tree {
         pos.s_test = new Square();
         pos.ray_list = new Rays();
         pos.hashkey = search_position.hashkey;
+        pos.eog = false;
         leaves_searched = 0;
         nodes_searched = 0;
         alpha = neginf;
@@ -77,7 +78,7 @@ int iterate (ref Tree t) {
     writefln("target time = %8.2f",target_time);
      
      
-    while (keepgoing) {
+    while ((keepgoing) && (!t.pos.eog)) {
         t.nodes_searched = 0;
         t.leaves_searched = 0;
         writef("pvsSearch(%2d)", n);
@@ -93,6 +94,13 @@ int iterate (ref Tree t) {
         timer.reset();
         keepgoing = (search_time < target_time);
         n++;
+        if (t.pos.num_moves[t.pos.position_index] == 0) {
+            t.pos.makePass();
+            t.pos.generateRayMoves();
+            if (t.pos.num_moves[t.pos.position_index] == 0)
+                t.pos.eog = true;
+            t.pos.unmakePass();
+        }
     }    
     return score;
 }
@@ -127,7 +135,7 @@ int pvsSearch (ref Tree tree, int alpha, int beta, int depth, int ctm, bool pass
             return tree.pos.eog_evaluate(ctm);
         }
         tree.pos.makePass();
-        score = -pvsSearch(tree, -beta, -alpha, depth-1, (ctm^1), true);
+        score = -pvsSearch(tree, -beta, -alpha, depth, (ctm^1), true);
         tree.pos.unmakePass();
         tree.pos.move_list[tree.pos.position_index][0].sq_num = tree.passmove;
         tree.pos.move_list[tree.pos.position_index][0].score = score;

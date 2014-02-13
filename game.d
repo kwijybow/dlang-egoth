@@ -28,6 +28,24 @@ bool processMove (ref Tree t, string move) {
         return (found);
 }
 
+void processComputerMove (ref Tree t) {
+        int score;
+
+        t.timer.reset();
+        t.timer.start();
+        score = iterate(t);
+        t.pos.makeMove(t.pos.move_list[t.pos.position_index][0]);
+        if (t.pos.side_to_move == t.pos.black) 
+            write("white (computer) moves ");
+        else
+            write("black (computer) moves "); 
+        writef(" %s, score %d in ", t.pos.move_list[t.pos.position_index-1][0].sq_name, score);
+        t.timer.stop();
+        t.runtime = (t.timer.peek().msecs/1000.0);
+        writefln("%8.2f secs",t.runtime);
+        t.game_time_used += t.runtime;
+}
+
 bool processCommand (ref Tree t, string command) {
     ulong nodes = 0;
     int score;
@@ -70,19 +88,12 @@ bool processCommand (ref Tree t, string command) {
         return(false);
     }
     if (c.front == "go") {
-        t.timer.reset();
-        t.timer.start();
-        score = iterate(t);
-        t.pos.makeMove(t.pos.move_list[t.pos.position_index][0]);
-        if (t.pos.side_to_move == t.pos.black) 
-            write("white (computer) moves ");
-        else
-            write("black (computer) moves "); 
-        writef(" %s, score %d in ", t.pos.move_list[t.pos.position_index-1][0].sq_name, score);
-        t.timer.stop();
-        t.runtime = (t.timer.peek().msecs/1000.0);
-        writefln("%8.2f secs",t.runtime);
-        t.game_time_used += t.runtime;
+        processComputerMove(t);
+        return(false);
+    }
+    if (c.front == "play") {
+        while (!t.pos.eog)
+            processComputerMove(t);
         return(false);
     }
     if (c.front == "time") {
@@ -107,9 +118,6 @@ bool processCommand (ref Tree t, string command) {
             writeln("not a legal move");
         return (false);
     }
-    
-    
-    
     writeln (command,"Command not understood");
     return(false);
 }
