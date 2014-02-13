@@ -30,19 +30,38 @@ bool processMove (ref Tree t, string move) {
 
 void processComputerMove (ref Tree t) {
         int score;
+        bool passed = false;
 
         t.timer.reset();
         t.timer.start();
         score = iterate(t);
-        t.pos.makeMove(t.pos.move_list[t.pos.position_index][0]);
+        if (t.pos.num_moves[t.pos.position_index] > 0) 
+            t.pos.makeMove(t.pos.move_list[t.pos.position_index][0]);
+        else {
+            if (!passed) {
+                t.pos.makePass();
+                passed = true;
+            }
+            else {
+                t.pos.eog = true;
+                return;
+            }
+        }
         if (t.pos.side_to_move == t.pos.black) 
-            write("white (computer) moves ");
+            if (passed) 
+                write("white (computer) passes ");
+            else
+                write("white (computer) moves ");
         else
-            write("black (computer) moves "); 
-        writef(" %s, score %d in ", t.pos.move_list[t.pos.position_index-1][0].sq_name, score);
+            if (passed)
+                write("black (computer) passes ");
+            else
+                write("black (computer) moves ");
+        if (!passed)        
+            writef(" %s, score %d ", t.pos.move_list[t.pos.position_index-1][0].sq_name, score);
         t.timer.stop();
         t.runtime = (t.timer.peek().msecs/1000.0);
-        writefln("%8.2f secs",t.runtime);
+        writefln("in %8.2f secs",t.runtime);
         t.game_time_used += t.runtime;
 }
 
@@ -92,8 +111,11 @@ bool processCommand (ref Tree t, string command) {
         return(false);
     }
     if (c.front == "play") {
-        while (!t.pos.eog)
+        while (!t.pos.eog) {
+            writeln("moves left = ", PopCnt(~(t.pos.white_stones | t.pos.black_stones)));
             processComputerMove(t);
+            t.pos.printPosition();
+        }
         return(false);
     }
     if (c.front == "time") {

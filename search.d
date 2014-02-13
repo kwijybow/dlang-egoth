@@ -18,7 +18,7 @@ class Tree {
     Move  best_move;
     StopWatch timer;
     double runtime;
-    double time_for_game = 1800.0;
+    double time_for_game = 300.0;
     double game_time_used = 0.0;
     int moves_left = 60;
     enum neginf = -128;
@@ -69,6 +69,7 @@ int iterate (ref Tree t) {
     int n = 1;
     StopWatch timer;
     double runtime;
+    int max_depth = 32;
     
     transposition_id=(transposition_id+1)&7;
     if (!transposition_id) transposition_id++;
@@ -78,7 +79,7 @@ int iterate (ref Tree t) {
     writefln("target time = %8.2f",target_time);
      
      
-    while ((keepgoing) && (!t.pos.eog)) {
+    while (keepgoing) {
         t.nodes_searched = 0;
         t.leaves_searched = 0;
         writef("pvsSearch(%2d)", n);
@@ -94,13 +95,7 @@ int iterate (ref Tree t) {
         timer.reset();
         keepgoing = (search_time < target_time);
         n++;
-        if (t.pos.num_moves[t.pos.position_index] == 0) {
-            t.pos.makePass();
-            t.pos.generateRayMoves();
-            if (t.pos.num_moves[t.pos.position_index] == 0)
-                t.pos.eog = true;
-            t.pos.unmakePass();
-        }
+        if (n > max_depth) keepgoing = false;
     }    
     return score;
 }
@@ -111,6 +106,7 @@ int pvsSearch (ref Tree tree, int alpha, int beta, int depth, int ctm, bool pass
     int best_move = 99;
     int testalpha,testbeta;
 
+/*    
     switch (hashProbe(tree.pos,ctm,alpha,beta,tree.pos.position_index,depth,tree.pos.hashmove[tree.pos.position_index])) {
         case 3:
             return(alpha);
@@ -121,7 +117,7 @@ int pvsSearch (ref Tree tree, int alpha, int beta, int depth, int ctm, bool pass
 	default:
 	    break;
     }
-    
+*/    
     
     tree.nodes_searched++;
     if (depth == 0) {
@@ -135,7 +131,7 @@ int pvsSearch (ref Tree tree, int alpha, int beta, int depth, int ctm, bool pass
             return tree.pos.eog_evaluate(ctm);
         }
         tree.pos.makePass();
-        score = -pvsSearch(tree, -beta, -alpha, depth, (ctm^1), true);
+        score = -pvsSearch(tree, -beta, -alpha, depth-1, (ctm^1), true);
         tree.pos.unmakePass();
         tree.pos.move_list[tree.pos.position_index][0].sq_num = tree.passmove;
         tree.pos.move_list[tree.pos.position_index][0].score = score;
@@ -163,16 +159,16 @@ int pvsSearch (ref Tree tree, int alpha, int beta, int depth, int ctm, bool pass
                 best_move = tree.pos.move_list[tree.pos.position_index][m].sq_num;
                 tree.pos.killer2[tree.pos.position_index] = tree.pos.killer1[tree.pos.position_index];
                 tree.pos.killer1[tree.pos.position_index] = tree.pos.move_list[tree.pos.position_index][m].sq_num;
-                hashStore(tree.pos,ctm,1,score,tree.pos.position_index,depth,best_move);
+//                hashStore(tree.pos,ctm,1,score,tree.pos.position_index,depth,best_move);
                 break;
             }    
         }
     }
     if ((alpha == orig_alpha) && (best_move < 64)) {
-        hashStore(tree.pos,ctm,3,alpha,tree.pos.position_index,depth,best_move);
+//        hashStore(tree.pos,ctm,3,alpha,tree.pos.position_index,depth,best_move);
     }    
     else if (best_move < 64) {
-        hashStore(tree.pos,ctm,2,alpha,tree.pos.position_index,depth,best_move);
+//        hashStore(tree.pos,ctm,2,alpha,tree.pos.position_index,depth,best_move);
     }    
     return alpha;
 }
