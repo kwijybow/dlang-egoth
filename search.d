@@ -1,4 +1,4 @@
-import std.stdio, std.string, std.array, std.datetime, std.conv;
+import std.stdio, std.string, std.array, std.datetime, std.conv, std.math;
 import position;
 import move;
 import squares;
@@ -66,7 +66,7 @@ int iterate (ref Tree t) {
     bool keepgoing = true;
     double search_time;
     double target_time;
-    int n = 1;
+    int n = 2;
     StopWatch timer;
     double runtime;
     int max_depth = 32;
@@ -74,9 +74,16 @@ int iterate (ref Tree t) {
     transposition_id=(transposition_id+1)&7;
     if (!transposition_id) transposition_id++;
     t.moves_left = PopCnt(~(t.pos.white_stones | t.pos.black_stones));
-    search_time = 0.0;
-    target_time = (t.time_for_game - t.game_time_used)/((to!float(t.moves_left))*1.5);
-    writefln("target time = %8.2f",target_time);
+    if (t.moves_left > 0) {
+        search_time = 0.0;
+        target_time = (t.time_for_game - t.game_time_used)/((to!float(t.moves_left))*2);
+        writefln("target time = %8.2f",target_time);
+    }
+    else {
+        keepgoing = false;
+        score = t.pos.eog_evaluate(t.pos.side_to_move);
+        t.pos.eog = true;
+    }   
      
      
     while (keepgoing) {
@@ -84,18 +91,19 @@ int iterate (ref Tree t) {
         t.leaves_searched = 0;
         writef("pvsSearch(%2d)", n);
         timer.start();
-        score = pvsSearch(t,-128,128,n,t.pos.side_to_move,false);
+        score = pvsSearch(t,-20128,20128,n,t.pos.side_to_move,false);
         nodes = t.nodes_searched;
         t.pos.sortMoves();
         timer.stop();
         writef(" move %4s",t.pos.move_list[t.pos.position_index][0].sq_name);
         runtime = (timer.peek().msecs/1000.0);
         search_time += runtime;
-        writefln("%5d score %12d nodes in %8.2f seconds for %12.0f nodes/sec",t.pos.move_list[t.pos.position_index][0].score, nodes, runtime, (nodes/runtime));
+        writefln("%8d score %12d nodes in %8.2f seconds for %12.0f nodes/sec",t.pos.move_list[t.pos.position_index][0].score, nodes, runtime, (nodes/runtime));
         timer.reset();
         keepgoing = (search_time < target_time);
         n++;
         if (n > max_depth) keepgoing = false;
+//        if (abs(t.pos.move_list[t.pos.position_index][0].score) >= 19936) keepgoing = false;
     }    
     return score;
 }
@@ -106,7 +114,6 @@ int pvsSearch (ref Tree tree, int alpha, int beta, int depth, int ctm, bool pass
     int best_move = 99;
     int testalpha,testbeta;
 
-/*    
     switch (hashProbe(tree.pos,ctm,alpha,beta,tree.pos.position_index,depth,tree.pos.hashmove[tree.pos.position_index])) {
         case 3:
             return(alpha);
@@ -117,7 +124,6 @@ int pvsSearch (ref Tree tree, int alpha, int beta, int depth, int ctm, bool pass
 	default:
 	    break;
     }
-*/    
     
     tree.nodes_searched++;
     if (depth == 0) {
@@ -152,23 +158,28 @@ int pvsSearch (ref Tree tree, int alpha, int beta, int depth, int ctm, bool pass
                 tree.pos.unmakeMove(tree.pos.move_list[tree.pos.position_index-1][m]);
                 tree.pos.move_list[tree.pos.position_index][m].score = score;
             }
-            if (score > alpha)
+            if (score > alpha) {
                 alpha = score;
                 best_move = tree.pos.move_list[tree.pos.position_index][m].sq_num;
+                tree.pos.move_list[tree.pos.position_index][m].score = score;
+            }
             if (alpha >= beta) {
                 best_move = tree.pos.move_list[tree.pos.position_index][m].sq_num;
                 tree.pos.killer2[tree.pos.position_index] = tree.pos.killer1[tree.pos.position_index];
                 tree.pos.killer1[tree.pos.position_index] = tree.pos.move_list[tree.pos.position_index][m].sq_num;
-//                hashStore(tree.pos,ctm,1,score,tree.pos.position_index,depth,best_move);
+                tree.pos.move_list[tree.pos.position_index][m].score = score;
+                hashStore(tree.pos,ctm,1,score,tree.pos.position_index,depth,best_move);
+                for (int i=m+1; m<tree.pos.num_moves[tree.pos.position_index]; m++)
+                    tree.pos.move_list[tree.pos.position_index][m].score = -20128;
                 break;
             }    
         }
     }
     if ((alpha == orig_alpha) && (best_move < 64)) {
-//        hashStore(tree.pos,ctm,3,alpha,tree.pos.position_index,depth,best_move);
+        hashStore(tree.pos,ctm,3,alpha,tree.pos.position_index,depth,best_move);
     }    
     else if (best_move < 64) {
-//        hashStore(tree.pos,ctm,2,alpha,tree.pos.position_index,depth,best_move);
+        hashStore(tree.pos,ctm,2,alpha,tree.pos.position_index,depth,best_move);
     }    
     return alpha;
 }

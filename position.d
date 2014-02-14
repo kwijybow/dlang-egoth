@@ -442,7 +442,7 @@ class Position {
         white_stone_count = PopCnt(white_stones);
         value = (black_stone_count - white_stone_count)/(black_stone_count + white_stone_count);
         value = value * mat_modifier;
-        score += lround(value);
+        score += lround(value) + 20000;
         
 
         if (ctm == white) { 
@@ -462,6 +462,9 @@ class Position {
                     move_list[position_index][b] = spare_move;
                 }
             }
+        }
+        for (a=1; a < num_moves[position_index]; a++) {
+            move_list[position_index][a].score = 0;
         }
     }
 }
