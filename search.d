@@ -18,7 +18,7 @@ class Tree {
     Move  best_move;
     StopWatch timer;
     double runtime;
-    double time_for_game = 300.0;
+    double time_for_game = 360000.0;
     double game_time_used = 0.0;
     int moves_left = 60;
     enum neginf = -128;
@@ -91,7 +91,7 @@ int iterate (ref Tree t) {
         t.leaves_searched = 0;
         writef("pvsSearch(%2d)", n);
         timer.start();
-        score = pvsSearch(t,-20128,20128,n,t.pos.side_to_move,false);
+        score = pvsSearch(t,-19135,19135,n,t.pos.side_to_move,false);
         nodes = t.nodes_searched;
         t.pos.sortMoves();
         timer.stop();
@@ -169,8 +169,8 @@ int pvsSearch (ref Tree tree, int alpha, int beta, int depth, int ctm, bool pass
                 tree.pos.killer1[tree.pos.position_index] = tree.pos.move_list[tree.pos.position_index][m].sq_num;
                 tree.pos.move_list[tree.pos.position_index][m].score = score;
                 hashStore(tree.pos,ctm,1,score,tree.pos.position_index,depth,best_move);
-                for (int i=m+1; m<tree.pos.num_moves[tree.pos.position_index]; m++)
-                    tree.pos.move_list[tree.pos.position_index][m].score = -20128;
+//                for (int i=m+1; m<tree.pos.num_moves[tree.pos.position_index]; m++)
+//                    tree.pos.move_list[tree.pos.position_index][m].score = 0;
                 break;
             }    
         }
