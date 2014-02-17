@@ -8,6 +8,7 @@ import position;
 import search;
 import hash;
 import game;
+import masks;
 
 void main (char[][] args) {
     Position p = new Position();

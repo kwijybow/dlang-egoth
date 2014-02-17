@@ -8,6 +8,7 @@ import flips;
 import position;
 import search;
 import hash;
+import masks;
 
 
 bool processMove (ref Tree t, string move) {
@@ -30,17 +31,18 @@ bool processMove (ref Tree t, string move) {
 
 void processComputerMove (ref Tree t) {
         int score;
-        bool passed = false;
 
         t.timer.reset();
         t.timer.start();
         score = iterate(t);
-        if (t.pos.num_moves[t.pos.position_index] > 0) 
+        if (t.pos.num_moves[t.pos.position_index] > 0) { 
             t.pos.makeMove(t.pos.move_list[t.pos.position_index][0]);
+            t.pos.passed = false;
+        }
         else {
-            if (!passed) {
+            if (!t.pos.passed) {
                 t.pos.makePass();
-                passed = true;
+                t.pos.passed = true;
             }
             else {
                 t.pos.eog = true;
@@ -48,16 +50,16 @@ void processComputerMove (ref Tree t) {
             }
         }
         if (t.pos.side_to_move == t.pos.black) 
-            if (passed) 
+            if (t.pos.passed) 
                 write("white (computer) passes ");
             else
                 write("white (computer) moves ");
         else
-            if (passed)
+            if (t.pos.passed)
                 write("black (computer) passes ");
             else
                 write("black (computer) moves ");
-        if (!passed)        
+        if (!t.pos.passed)        
             writef(" %s, score %d ", t.pos.move_list[t.pos.position_index-1][0].sq_name, score);
         t.timer.stop();
         t.runtime = (t.timer.peek().msecs/1000.0);
@@ -73,6 +75,7 @@ bool processCommand (ref Tree t, string command) {
     double runtime;
     bool found;
     string move;
+    Position p;
     
     auto c = splitter(command);
     if (c.front == "quit") 
@@ -140,6 +143,16 @@ bool processCommand (ref Tree t, string command) {
             writeln("not a legal move");
         return (false);
     }
+    if (c.front == "new") {
+        p = new Position();    
+        InitializeRandomHash();
+        InitializeHashTables();
+        hash_maska=(1<<log_hash)-1;
+        p.startBoard();
+        t = new Tree(p);
+        t.pos.printPosition();
+        return (false);
+    }    
     writeln (command,"Command not understood");
     return(false);
 }

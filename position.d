@@ -7,6 +7,7 @@ import square;
 import flips;
 import rays;
 import hash;
+import masks;
 
 class Position {
     enum white = 0;
@@ -30,6 +31,7 @@ class Position {
     enum hashmove_bonus = 1024;
     enum killer1_bonus = 528;
     enum killer2_bonus = 256;
+    Masks mask_test;
     
     this() {
         for (int i=0; i<64; i++) {
@@ -52,6 +54,7 @@ class Position {
         ray_list = new Rays();
         hashkey = 0;
         spare_move = new Move();
+        mask_test = new Masks();
     }
     
     void dropStone(int side, string sq_name) {

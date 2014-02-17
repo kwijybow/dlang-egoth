@@ -6,6 +6,7 @@ import square;
 import rays;
 import hash;
 import bitboard;
+import masks;
 
 class Tree {
     Position pos;
@@ -18,7 +19,7 @@ class Tree {
     Move  best_move;
     StopWatch timer;
     double runtime;
-    double time_for_game = 360000.0;
+    double time_for_game = 600.0;
     double game_time_used = 0.0;
     int moves_left = 60;
     enum neginf = -128;
@@ -47,6 +48,7 @@ class Tree {
         pos.sqs = new Squares();
         pos.s_test = new Square();
         pos.ray_list = new Rays();
+        pos.mask_test = new Masks();
         pos.hashkey = search_position.hashkey;
         pos.eog = false;
         leaves_searched = 0;
@@ -91,7 +93,7 @@ int iterate (ref Tree t) {
         t.leaves_searched = 0;
         writef("pvsSearch(%2d)", n);
         timer.start();
-        score = pvsSearch(t,-19135,19135,n,t.pos.side_to_move,false);
+        score = pvsSearch(t,-19135,19135,n,t.pos.side_to_move,t.pos.passed);
         nodes = t.nodes_searched;
         t.pos.sortMoves();
         timer.stop();
@@ -103,7 +105,8 @@ int iterate (ref Tree t) {
         keepgoing = (search_time < target_time);
         n++;
         if (n > max_depth) keepgoing = false;
-//        if (abs(t.pos.move_list[t.pos.position_index][0].score) >= 19936) keepgoing = false;
+        t.moves_left = PopCnt(~(t.pos.white_stones | t.pos.black_stones));
+        if (n > (t.moves_left + 2)) keepgoing = false;
     }    
     return score;
 }
@@ -113,6 +116,7 @@ int pvsSearch (ref Tree tree, int alpha, int beta, int depth, int ctm, bool pass
     int orig_alpha = alpha;
     int best_move = 99;
     int testalpha,testbeta;
+    bool q_yes = false;
 
     switch (hashProbe(tree.pos,ctm,alpha,beta,tree.pos.position_index,depth,tree.pos.hashmove[tree.pos.position_index])) {
         case 3:
@@ -146,17 +150,33 @@ int pvsSearch (ref Tree tree, int alpha, int beta, int depth, int ctm, bool pass
         for (int m=0; m<tree.pos.num_moves[tree.pos.position_index]; m++) {
             if (m != 0) {
                 tree.pos.makeMove(tree.pos.move_list[tree.pos.position_index][m]);
+                if (tree.pos.move_list[tree.pos.position_index][m].mask && tree.pos.mask_test.quiesce) {
+                    depth += 1;
+                    q_yes = true;
+                }
                 score = -pvsSearch(tree, (-alpha - 1), -alpha, (depth-1), (ctm^1), false);
                 if ((alpha < score) && (score < beta))  
                     score = -pvsSearch(tree, -beta, -alpha, (depth-1), (ctm^1), false);
                 tree.pos.unmakeMove(tree.pos.move_list[tree.pos.position_index-1][m]);
                 tree.pos.move_list[tree.pos.position_index][m].score = score;
+                if (q_yes) {
+                    q_yes = false;
+                    depth -= 1;
+                }
             }        
             else {
                 tree.pos.makeMove(tree.pos.move_list[tree.pos.position_index][m]);
+                if (tree.pos.move_list[tree.pos.position_index][m].mask && tree.pos.mask_test.quiesce) {
+                    depth += 1;
+                    q_yes = true;
+                }                
                 score = -pvsSearch(tree, -beta, -alpha, (depth-1), (ctm^1), false);
                 tree.pos.unmakeMove(tree.pos.move_list[tree.pos.position_index-1][m]);
                 tree.pos.move_list[tree.pos.position_index][m].score = score;
+                if (q_yes) {
+                    q_yes = false;
+                    depth -= 1;
+                }
             }
             if (score > alpha) {
                 alpha = score;
