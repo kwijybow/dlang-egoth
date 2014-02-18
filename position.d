@@ -16,7 +16,6 @@ class Position {
     int num_moves[128];
     int position_index;
     bool passed;
-    bool eog;
     ulong black_stones;
     ulong white_stones;
     int side_to_move;
@@ -214,43 +213,11 @@ class Position {
         }
         num_moves[position_index] = move_index;
         sortMoves();
+        for (int a=0; a < num_moves[position_index]; a++) {
+            move_list[position_index][a].score = 0;
+        }
     }
     
-    void generateMoves() {
-        ulong gen = 0;
-        ulong one = 1;
-        ulong m;
-        ulong some_flips;
-        int s = 0;
-        int move_index = 0;
-        ulong astones, tstones;
-        
-        num_moves[position_index] = 0;
-        if (side_to_move == black) { 
-            astones = black_stones;
-            tstones = white_stones;
-        }    
-        else {
-	    astones = white_stones;
-	    tstones = black_stones;
-	}
-        gen = s_test.genAdjMask(tstones);
-        gen ^= astones;
-        while (gen) {
-            s = bsf(gen);
-            m = (one << s);
-            gen &= (gen - 1);
-            some_flips = getFlips(m, astones, tstones);
-            if (some_flips){
-//                move_list[position_index][move_index].sq_num = s;
-//                move_list[position_index][move_index].sq_name = sqs.square_list[s].sq_name;
-                move_list[position_index][move_index].mask = m;
-                move_list[position_index][move_index].flips = some_flips;
-                move_index += 1;
-            }
-        }
-        num_moves[position_index] = move_index;
-    }
     
     void printMoveList() {
         writeln("MOVE LIST");
@@ -263,26 +230,7 @@ class Position {
         for (int m=0; m<num_moves[position_index]; m++)
             writeln(move_list[position_index][m].sq_name, " score ",move_list[position_index][m].score);
         writeln();
-//        for (int m=0; m<num_moves[position_index]; m++)
-//            move_list[position_index][m].printMove();
-        writeln();
     }       
-/* 
-    void printPosition() {
-        writeln("POSITION");
-        writeln("\nposition index = ", position_index);
-        writeln("legal moves = ", num_moves[position_index]);
-        if (side_to_move == black) 
-            writeln("Black to move");
-        else
-            writeln("White to move");
-        writeln("Black Stones");
-        DisplayBitBoard(black_stones);
-        writeln("White Stones");
-        DisplayBitBoard(white_stones);
-        writeln();
-    } 
-*/
 
     void updateBoard() {
         enum e_stone = 0;
@@ -387,6 +335,17 @@ class Position {
         return nodes;
     }
     
+    int eog_evaluate(int ctm) {
+        int score = 0;
+
+        score = PopCnt(black_stones) - PopCnt(white_stones);
+
+        if (ctm == white) { 
+            score = -score;
+        }    
+        return score;
+    }
+    
     int evaluate(int ctm) {
         float black_pot_count;
         float white_pot_count;
@@ -416,43 +375,6 @@ class Position {
         }   
         return score;
     }
-
-    int eog_evaluate(int ctm) {
-        float black_pot_count;
-        float white_pot_count;
-        float black_stone_count;
-        float white_stone_count;
-        int pot_modifier = 0;
-        int mat_modifier = 64;
-        ulong potential;
-        ulong material;
-        
-        float value;
-        int score = 0;
-        
-        potential = s_test.genAdjMask(white_stones);
-        potential ^= black_stones;
-        black_pot_count = PopCnt(potential);
-        potential = s_test.genAdjMask(black_stones);
-        potential ^= white_stones;
-        white_pot_count = PopCnt(potential);
-        
-        value = (black_pot_count - white_pot_count)/(black_pot_count + white_pot_count);
-        value = value * pot_modifier;
-        score += lround(value); 
-        
-        black_stone_count = PopCnt(black_stones);
-        white_stone_count = PopCnt(white_stones);
-        value = (black_stone_count - white_stone_count)/(black_stone_count + white_stone_count);
-        value = value * mat_modifier;
-        score += lround(value) + 20000;
-        
-
-        if (ctm == white) { 
-            score = -score;
-        }    
-        return score;
-    }
     
     void sortMoves() {
         int a, b;
@@ -465,9 +387,6 @@ class Position {
                     move_list[position_index][b] = spare_move;
                 }
             }
-        }
-        for (a=1; a < num_moves[position_index]; a++) {
-            move_list[position_index][a].score = 0;
         }
     }
 }

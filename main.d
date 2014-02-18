@@ -11,19 +11,8 @@ import game;
 import masks;
 
 void main (char[][] args) {
-    Position p = new Position();
-    Tree t;
     
     
-    
-    InitializeRandomHash();
-    InitializeHashTables();
-    hash_maska=(1<<log_hash)-1;
-     
-    p.startBoard();
-    t = new Tree(p);
-
-    getCommand(t);
 }
     
     
