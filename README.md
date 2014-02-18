@@ -1,4 +1,4 @@
-dlang-othello
+dlang-egoth
 =============
 
-My Othello Project in D
+My Othello Endgame Solver 
