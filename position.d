@@ -61,9 +61,11 @@ class Position {
         int i,j;
         ulong one = 1;
   
-        i = (sq_name[0] - 'a') * 8;
-        j = (sq_name[1] - '1');
-        sq_num = i + j;
+//        i = (sq_name[0] - 'a') * 8;
+//        j = (sq_name[1] - '1');
+//        sq_num = i + j;
+
+        sq_num = sqs.squares_by_name[sq_name].sq_num;
 
         if (side == black) {
             black_stones = set(black_stones,(one<<sq_num));

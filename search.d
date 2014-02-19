@@ -1,4 +1,4 @@
-import std.stdio, std.string, std.array, std.datetime, std.conv, std.math;
+import std.stdio, std.string, std.array, std.datetime, std.conv, std.math, std.algorithm;
 import position;
 import move;
 import squares;
@@ -12,21 +12,14 @@ class Tree {
     Position pos;
     ulong leaves_searched;
     ulong nodes_searched;
-    int   alpha;
-    int   beta;
-    int   best_score;
-    int   ctm;
-    Move  best_move;
     StopWatch timer;
     double runtime;
-    double time_for_game = 600.0;
-    double game_time_used = 0.0;
-    int moves_left = 60;
     enum neginf = -64;
     enum posinf = 64;
     enum badsquare = 64;
     enum passmove = 99;
     bool eog;
+    int  ctm;
     
     this(Position search_position) {
         pos = new Position;
@@ -54,15 +47,11 @@ class Tree {
         eog = false;
         leaves_searched = 0;
         nodes_searched = 0;
-        alpha = neginf;
-        beta = posinf;
-        best_score = 0;
-        best_move = new Move;
         runtime = 0.0;
-        moves_left = PopCnt(~(search_position.white_stones | search_position.black_stones));
     }
 }
 
+/*
 int iterate (ref Tree t) {
     ulong nodes = 0;
     int score;
@@ -109,7 +98,7 @@ int pvsSearch (ref Tree tree, int alpha, int beta, int depth, int ctm, bool pass
     int testalpha,testbeta;
     bool q_yes = false;
 
-/*    
+    
     switch (hashProbe(tree.pos,ctm,alpha,beta,tree.pos.position_index,depth,tree.pos.hashmove[tree.pos.position_index])) {
         case 3:
             return(alpha);
@@ -120,12 +109,12 @@ int pvsSearch (ref Tree tree, int alpha, int beta, int depth, int ctm, bool pass
 	default:
 	    break;
     }
-*/    
+    
     tree.nodes_searched++;
-//    if (depth == 0) {
-//        tree.leaves_searched++;
-//        return (tree.pos.evaluate(ctm));
-//    }
+    if (depth == 0) {
+        tree.leaves_searched++;
+        return (tree.pos.evaluate(ctm));
+    }
     tree.pos.generateRayMoves();
     if (tree.pos.num_moves[tree.pos.position_index] == 0) {
         if (passed) {
@@ -184,16 +173,84 @@ int pvsSearch (ref Tree tree, int alpha, int beta, int depth, int ctm, bool pass
                 tree.pos.killer2[tree.pos.position_index] = tree.pos.killer1[tree.pos.position_index];
                 tree.pos.killer1[tree.pos.position_index] = tree.pos.move_list[tree.pos.position_index][m].sq_num;
                 tree.pos.move_list[tree.pos.position_index][m].score = score;
-//                hashStore(tree.pos,ctm,1,score,tree.pos.position_index,depth,best_move);
+                hashStore(tree.pos,ctm,1,score,tree.pos.position_index,depth,best_move);
                 break;
             }    
         }
     }
     if ((alpha == orig_alpha) && (best_move < 64)) {
-//        hashStore(tree.pos,ctm,3,alpha,tree.pos.position_index,depth,best_move);
+        hashStore(tree.pos,ctm,3,alpha,tree.pos.position_index,depth,best_move);
     }    
     else if (best_move < 64) {
-//        hashStore(tree.pos,ctm,2,alpha,tree.pos.position_index,depth,best_move);
+        hashStore(tree.pos,ctm,2,alpha,tree.pos.position_index,depth,best_move);
     }    
     return alpha;
 }
+*/
+
+int Scout (ref Tree t, int alpha, int beta)
+{
+     int i;
+     int b = t.neginf;
+     int s = t.neginf;
+     int test;
+     int orig_alpha=alpha;
+     int num_moves;
+     int last_legal_count = 1;
+   
+     t.nodes_searched++;
+     t.pos.generateRayMoves();
+     if (t.pos.num_moves[t.pos.position_index] == 0) {
+        if (t.pos.position_index > 0) 
+            last_legal_count = t.pos.num_moves[t.pos.position_index - 1];
+        else
+            last_legal_count = 1;
+        if (last_legal_count == 0) {
+           b = t.pos.eog_evaluate(t.pos.side_to_move);
+           t.pos.move_list[t.pos.position_index][0].sq_num = t.passmove;
+           t.pos.move_list[t.pos.position_index][0].score = b;
+           t.leaves_searched++;
+           return b;
+        } else {
+           t.pos.makePass();
+           b = -Scout(t, -beta, -alpha);
+           t.pos.unmakePass();
+           t.pos.move_list[t.pos.position_index][0].score = b;
+           return b;
+        }
+     }
+     t.pos.makeMove(t.pos.move_list[t.pos.position_index][0]);
+     b = -Scout(t,-beta,-alpha);
+     t.pos.unmakeMove(t.pos.move_list[t.pos.position_index-1][0]);
+     t.pos.move_list[t.pos.position_index][0].score = b;
+     if (b > alpha) {
+         alpha = b;
+         if (b >= beta) {
+             t.pos.killer2[t.pos.position_index] = t.pos.killer1[t.pos.position_index];
+             t.pos.killer1[t.pos.position_index] = t.pos.move_list[t.pos.position_index][0].sq_num;
+             return b;
+         }
+     }
+     i=1;
+     while (i<t.pos.num_moves[t.pos.position_index]) {
+         t.pos.makeMove(t.pos.move_list[t.pos.position_index][i]);
+         test = -Scout(t, -alpha-1, -alpha);
+         if ((test > alpha) && (test < beta))
+             s = -Scout(t, -beta, -test);
+         t.pos.unmakeMove(t.pos.move_list[t.pos.position_index-1][i]);
+         s = max(s, test);
+         b = max(s, b);
+         t.pos.move_list[t.pos.position_index][i].score = b;
+         if (b > alpha) {
+             alpha = b;
+             if (b >= beta) {
+                 t.pos.killer2[t.pos.position_index] = t.pos.killer1[t.pos.position_index];
+                 t.pos.killer1[t.pos.position_index] = t.pos.move_list[t.pos.position_index][i].sq_num;
+                 return b;
+             }
+         }
+         i++;
+     }
+     return b;
+}
+

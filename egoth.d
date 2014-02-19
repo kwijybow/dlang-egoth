@@ -13,6 +13,8 @@ import test;
 void main (char[][] args) {
     Tree t;
     Position p;
+    TestResults ts = new TestResults();
+    
 
     foreach (line; File("test.obf").byLine()) {
         p = new Position();
@@ -22,9 +24,10 @@ void main (char[][] args) {
         t = new Tree(p);
         if (setupTest(t,line)) {
             performTest(t);
-            outputTestResults(t,line);
+            ts.add(line,t.runtime, t.pos.sqs.name(t.pos.move_list[0][0].sq_num), t.pos.move_list[0][0].score, t.nodes_searched, t.leaves_searched);
         }
     }
+    outputTestResults(ts);
 }
     
     

@@ -10,7 +10,7 @@ class Squares {
 
     this() {
       foreach(row; ["8","7","6","5","4","3","2","1"]) {
-        foreach(col; ["a","b","c","d","e","f","g","h"]) {
+        foreach(col; ["h","g","f","e","d","c","b","a"]) {
             sq_name = col ~ row;
             square_list[sq_num] = new Square(sq_num,sq_name);
             squares_by_name[sq_name] = new Square(sq_num, sq_name);
@@ -24,7 +24,9 @@ class Squares {
     }
     
     string name(int s) {
-        return square_list[s].sq_name;
+        if (s < 64)
+            return square_list[s].sq_name;
+        return ("pass");
     }
     
     int num(int s) {
