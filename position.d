@@ -31,6 +31,11 @@ class Position {
     enum killer1_bonus = 528;
     enum killer2_bonus = 256;
     Masks mask_test;
+    enum wothless = 0;
+    enum lower    = 1;
+    enum upper    = 2;
+    enum exact    = 3;
+    enum maxply   = 128;
     
     this() {
         for (int i=0; i<64; i++) {

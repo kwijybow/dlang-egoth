@@ -20,6 +20,7 @@ class Tree {
     enum passmove = 99;
     bool eog;
     int  ctm;
+    int expected_move;
     
     this(Position search_position) {
         pos = new Position;
@@ -48,6 +49,7 @@ class Tree {
         leaves_searched = 0;
         nodes_searched = 0;
         runtime = 0.0;
+        expected_move = 64;
     }
 }
 
@@ -197,6 +199,18 @@ int Scout (ref Tree t, int alpha, int beta)
      int orig_alpha=alpha;
      int num_moves;
      int last_legal_count = 1;
+     int best_move = t.passmove;
+     
+//     switch (hashProbe(t.pos,t.pos.side_to_move,alpha,beta,t.pos.position_index,0,t.pos.hashmove[t.pos.position_index])) {
+//         case t.pos.exact:
+//             return(alpha);
+//         case t.pos.lower:
+//             return(beta);
+//         case t.pos.upper:
+//             return(alpha);
+//         default:
+//             break;
+//     }     
    
      t.nodes_searched++;
      t.pos.generateRayMoves();
@@ -223,11 +237,13 @@ int Scout (ref Tree t, int alpha, int beta)
      b = -Scout(t,-beta,-alpha);
      t.pos.unmakeMove(t.pos.move_list[t.pos.position_index-1][0]);
      t.pos.move_list[t.pos.position_index][0].score = b;
+     best_move = t.pos.move_list[t.pos.position_index][0].sq_num;
      if (b > alpha) {
          alpha = b;
          if (b >= beta) {
              t.pos.killer2[t.pos.position_index] = t.pos.killer1[t.pos.position_index];
              t.pos.killer1[t.pos.position_index] = t.pos.move_list[t.pos.position_index][0].sq_num;
+//             hashStore(t.pos,t.pos.side_to_move,t.pos.lower,b,t.pos.position_index,0,t.pos.move_list[t.pos.position_index][0].sq_num);
              return b;
          }
      }
@@ -241,16 +257,44 @@ int Scout (ref Tree t, int alpha, int beta)
          s = max(s, test);
          b = max(s, b);
          t.pos.move_list[t.pos.position_index][i].score = b;
+         best_move = t.pos.move_list[t.pos.position_index][i].sq_num;
          if (b > alpha) {
              alpha = b;
              if (b >= beta) {
                  t.pos.killer2[t.pos.position_index] = t.pos.killer1[t.pos.position_index];
                  t.pos.killer1[t.pos.position_index] = t.pos.move_list[t.pos.position_index][i].sq_num;
+//                 hashStore(t.pos,t.pos.side_to_move,t.pos.lower,b,t.pos.position_index,0,t.pos.move_list[t.pos.position_index][i].sq_num);
                  return b;
              }
          }
          i++;
      }
+//     if (alpha == orig_alpha) 
+//         hashStore(t.pos,t.pos.side_to_move,t.pos.upper,b,t.pos.position_index,0,best_move);
+//     else
+//         hashStore(t.pos,t.pos.side_to_move,t.pos.exact,b,t.pos.position_index,0,best_move);
      return b;
 }
 
+
+int MTDf(ref Tree t, int f)
+{
+    int g=f;
+    int lower_bound=t.neginf;
+    int upper_bound=t.posinf;
+    int beta;
+    
+
+    do {
+        if (g==lower_bound)
+            beta=g+1;
+        else
+            beta=g;
+        g=Scout(t,beta-1,beta);
+        if (g<beta) 
+            upper_bound=g;
+        else 
+            lower_bound=g;
+    } while (!(lower_bound>=upper_bound));
+    return g;
+}

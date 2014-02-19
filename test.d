@@ -36,6 +36,7 @@ class TestResults {
 bool setupTest(ref Tree t, char[] line) {
     int i = 0;
     bool ok = true;
+    int row, col;
     
     while (i < 64) {
         switch  (line[i]) {
@@ -64,6 +65,9 @@ bool setupTest(ref Tree t, char[] line) {
             ok = false;
             break;
     }
+    col = line[68] - 'A';
+    row = line[69] - '1';
+    t.expected_move = 63 - ((row * 8) + col);
     return ok;
 }
 
@@ -73,10 +77,11 @@ void performTest(ref Tree t) {
     t.pos.printPosition();
     writeln;
     t.timer.start();
-    score = Scout(t, t.neginf, t.posinf);        //pvsSearch(t,t.neginf,t.posinf,32,t.pos.side_to_move,t.pos.passed); //iterate(t);
+    score = MTDf(t,0); //Scout(t, t.neginf, t.posinf);        //pvsSearch(t,t.neginf,t.posinf,32,t.pos.side_to_move,t.pos.passed); //iterate(t);
     t.pos.sortMoves();
     t.timer.stop();
     t.runtime = (t.timer.peek().msecs/1000.0);
+    writefln("expecting = %s", t.pos.sqs.name(t.expected_move));
     writefln("best move = %s, score = %s in %8.2f secs for %12.0f Knodes/sec", t.pos.sqs.name(t.pos.move_list[0][0].sq_num), t.pos.move_list[0][0].score, t.runtime, (t.nodes_searched/1000)/t.runtime);
     writeln;
 }
@@ -93,6 +98,7 @@ void outputTestResults(ref TestResults ts) {
     }
     writefln("Summary for %5d Test Results", ts.results.length);
     writeln("======================================");
+    writefln("total time seconds      = %12.2f",total_time);
     writefln("total nodes searched    = %12.0f",total_nodes);
     writefln("total leaves searched   = %12.0f",total_leaves);
     writefln("overall Knps            = %12.2f",(total_nodes/1000)/total_time);
