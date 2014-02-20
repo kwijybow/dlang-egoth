@@ -77,7 +77,7 @@ void performTest(ref Tree t) {
     t.pos.printPosition();
     writeln;
     t.timer.start();
-    score = MTDf(t,0); //Scout(t, t.neginf, t.posinf);        //pvsSearch(t,t.neginf,t.posinf,32,t.pos.side_to_move,t.pos.passed); //iterate(t);
+    score = MTDf(t,0); /*Scout(t, t.neginf, t.posinf);*/
     t.pos.sortMoves();
     t.timer.stop();
     t.runtime = (t.timer.peek().msecs/1000.0);

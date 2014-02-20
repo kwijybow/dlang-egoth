@@ -15,13 +15,17 @@ void main (char[][] args) {
     Position p;
     TestResults ts = new TestResults();
     
+    InitializeRandomHash();
+    InitializeHashTables();
+    hash_maska=(1<<log_hash)-1;
+    
 
     foreach (line; File("test.obf").byLine()) {
         p = new Position();
-        InitializeRandomHash();
-        InitializeHashTables();
-        hash_maska=(1<<log_hash)-1;
         t = new Tree(p);
+        transposition_id=(transposition_id+1)&7;
+        if (!transposition_id) transposition_id++;
+        
         if (setupTest(t,line)) {
             performTest(t);
             ts.add(line,t.runtime, t.pos.sqs.name(t.pos.move_list[0][0].sq_num), t.pos.move_list[0][0].score, t.nodes_searched, t.leaves_searched);

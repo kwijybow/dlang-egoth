@@ -6,11 +6,20 @@ import bitboard;
 struct hash_entry {
   ulong word1;
   ulong word2;
+  ulong word3;
+  ulong word4;
+  
+  this (ulong word) {
+      word1 = word;
+      word2 = 0;
+      word3 = 0;
+      word4 = 0;
+  }
 };
 
 static uint hash_table_size = 524288;
-static hash_entry trans_ref_wa[524289];
-static hash_entry trans_ref_ba[524289];
+hash_entry[] trans_ref_wa;
+hash_entry[] trans_ref_ba;
 static ulong w_stone_random[64];
 static ulong b_stone_random[64];
 static byte transposition_id;
@@ -93,15 +102,18 @@ void InitializeRandomHash()
 
 void InitializeHashTables()
 {
-  int i;
+  int i, next;
+  ulong word1 = 0;
+  
+  word1 = to!ulong(32)<<34;
+  word1 |= to!ulong(7)<<61;
   transposition_id=0;
-  for (i=0;i<hash_table_size;i++)
-    trans_ref_wa[i].word1 = to!ulong(32)<<34;
-    trans_ref_wa[i].word1 |= to!ulong(7)<<61;
-    trans_ref_wa[i].word2 = 0;
-    trans_ref_ba[i].word1 = to!ulong(32)<<34;
-    trans_ref_ba[i].word1 |= to!ulong(7)<<61;
-    trans_ref_ba[i].word2 = 0;
+  trans_ref_ba.length = hash_table_size;
+  trans_ref_wa.length = hash_table_size;
+  for (i=0;i<hash_table_size;i++) {
+    trans_ref_wa[i] = hash_entry(word1);
+    trans_ref_ba[i] = hash_entry(word1);
+  }
 }
 
 
@@ -120,24 +132,28 @@ void hashStore (ref Position sp, int ctm, int type, int value, int ply, int dept
     index = sp.hashkey & hash_maska;
 //    writeln(index);
     if (ctm == 1) {
-        draft = trans_ref_ba[index].word1>>34;
-        age = trans_ref_ba[index].word1>>61;
-        age=age && (age!=transposition_id);
-        if (age || (depth>=draft)) {
+//        draft = trans_ref_ba[index].word1>>34;
+//        age = trans_ref_ba[index].word1>>61;
+//        age=age && (age!=transposition_id);
+//        if (age || (depth>=draft)) {
 //            writeln("got here");
             trans_ref_ba[index].word1 = word1;
             trans_ref_ba[index].word2 = word2;
-        }
+            trans_ref_ba[index].word3 = sp.black_stones;
+            trans_ref_ba[index].word4 = sp.white_stones;
+//        }
     }
     else {
-        draft = trans_ref_wa[index].word1>>34;
-        age = trans_ref_wa[index].word1>>61;
-        age=age && (age!=transposition_id);
-        if (age || (depth>=draft)) {
+//        draft = trans_ref_wa[index].word1>>34;
+//        age = trans_ref_wa[index].word1>>61;
+//        age=age && (age!=transposition_id);
+//        if (age || (depth>=draft)) {
 //            writeln("got here");
             trans_ref_wa[index].word1 = word1;
             trans_ref_wa[index].word2 = word2;
-        }
+            trans_ref_wa[index].word3 = sp.black_stones;
+            trans_ref_wa[index].word4 = sp.white_stones;
+//        }
     }
 //    writeln("storing move,value,type,ply,depth,index ",move,",", value,",",type,",",ply,",",depth,",",index);
 //    writeln("word1",word1);
@@ -145,7 +161,7 @@ void hashStore (ref Position sp, int ctm, int type, int value, int ply, int dept
 
 int hashProbe (ref Position sp, int ctm, ref int alpha, ref int beta, int ply, int depth, ref int move)
 {
-    ulong word1, word2, index;
+    ulong word1, word2, word3, word4, index;
     uint type, draft, word1l, word1r;
     int val;
     
@@ -154,12 +170,17 @@ int hashProbe (ref Position sp, int ctm, ref int alpha, ref int beta, int ply, i
     if (ctm == 1) {
         word1 = trans_ref_ba[index].word1;
         word2 = trans_ref_ba[index].word2;
+        word3 = trans_ref_ba[index].word3;
+        word4 = trans_ref_ba[index].word4;
     } 
     else {
         word1 = trans_ref_wa[index].word1;
         word2 = trans_ref_wa[index].word2;
+        word3 = trans_ref_wa[index].word3;
+        word4 = trans_ref_wa[index].word4;
     }    
     if (word2 == sp.hashkey) {
+      if ((sp.black_stones == word3) && (sp.white_stones == word4)) {
 //        DisplayBitBoard(word1);
 //        writeln;
         word1l = word1>>32;
@@ -174,33 +195,35 @@ int hashProbe (ref Position sp, int ctm, ref int alpha, ref int beta, int ply, i
         move = (word1l>>16)&255;
 //        DisplayBitBoard(to!ulong(move));
 //        writeln;
-        draft = (word1l&65535)>>2;
+//        draft = (word1l&65535)>>2;
         type = (word1l) & 03;
 //        writeln("retrieving move,value,type,ply,depth,draft,index ",move,",", val,",",type,",",ply,",",depth,",",draft,",",index);
 //        writeln("word1 ",word1);
         
-        if (depth>draft) return(0);
-       
+//        if (depth>draft) return(sp.worthless);
+
         switch (type) {
-        case 3:
+        case sp.exact:
             alpha=val;
-            return(3);
-        case 2:
+            return(sp.exact);
+        case sp.upper:
             if (val <= alpha) {
                alpha=val;
-               return(2);
+               return(sp.upper);
             }
-            return(1);
-        case 1:
+            return(sp.worthless);
+        case sp.lower:
             if (val >= beta) {
                 beta=val;
-                return(1);
+                return(sp.lower);
             }
-            return(0);
-        default: 
-            return(0);
+            return(sp.worthless);
+        default:
+            break;
         }
+
+      }  
     }
-    return(0);
+    return(sp.worthless);
 }
     

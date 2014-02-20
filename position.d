@@ -26,12 +26,16 @@ class Position {
     Move spare_move;
     int killer1[128];
     int killer2[128];
+    int killer3[128];
+    int killer4[128];    
     int hashmove[128];
     enum hashmove_bonus = 1024;
-    enum killer1_bonus = 528;
-    enum killer2_bonus = 256;
+    enum killer1_bonus = 1000;
+    enum killer2_bonus = 750;
+    enum killer3_bonus = 500;
+    enum killer4_bonus = 250;
     Masks mask_test;
-    enum wothless = 0;
+    enum worthless = 0;
     enum lower    = 1;
     enum upper    = 2;
     enum exact    = 3;
@@ -207,14 +211,17 @@ class Position {
                 move_list[position_index][move_index].sq_name = sqs.name(fromsq);
                 move_list[position_index][move_index].mask = (one << fromsq);
                 move_list[position_index][move_index].flips = some_flips;
-                move_list[position_index][move_index].score = sqs.see_value(fromsq);
+                move_list[position_index][move_index].score = sqs.see_value(fromsq) /* + (10*PopCnt(some_flips))*/;
                 if (fromsq == killer1[position_index])
                     move_list[position_index][move_index].score += killer1_bonus;
-                else 
-                    if (fromsq == killer2[position_index])
-                        move_list[position_index][move_index].score += killer2_bonus;
-                if (fromsq == hashmove[position_index])
-                    move_list[position_index][move_index].score += hashmove_bonus;
+                if (fromsq == killer2[position_index])
+                    move_list[position_index][move_index].score += killer2_bonus;
+                if (fromsq == killer3[position_index])
+                    move_list[position_index][move_index].score += killer3_bonus;
+                if (fromsq == killer4[position_index])
+                    move_list[position_index][move_index].score += killer4_bonus;
+//                if (fromsq == hashmove[position_index])
+//                    move_list[position_index][move_index].score += hashmove_bonus;
                 move_index += 1;
             }
         }
