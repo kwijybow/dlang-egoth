@@ -74,16 +74,16 @@ bool setupTest(ref Tree t, char[] line) {
 void performTest(ref Tree t) {
     int score;
     
-    t.pos.printPosition();
-    writeln;
+//    t.pos.printPosition();
+//    writeln;
     t.timer.start();
-    score = MTDf(t,0); /*Scout(t, t.neginf, t.posinf);*/
+    score = searchRoot(t); /*MTDf(t,0);*/ /*Scout(t, t.neginf, t.posinf);*/
     t.pos.sortMoves();
     t.timer.stop();
     t.runtime = (t.timer.peek().msecs/1000.0);
-    writefln("expecting = %s", t.pos.sqs.name(t.expected_move));
-    writefln("best move = %s, score = %s in %8.2f secs for %12.0f Knodes/sec", t.pos.sqs.name(t.pos.move_list[0][0].sq_num), t.pos.move_list[0][0].score, t.runtime, (t.nodes_searched/1000)/t.runtime);
-    writeln;
+//    writefln("expecting = %s", t.pos.sqs.name(t.expected_move));
+    writefln(" | %2s | %3s | %8.2f secs | %12d | %6.0f Knodes/sec |", t.pos.sqs.name(t.pos.move_list[0][0].sq_num), t.pos.move_list[0][0].score, t.runtime,t.nodes_searched, (t.nodes_searched/1000)/t.runtime);
+//    writeln;
 }
 
 void outputTestResults(ref TestResults ts) {

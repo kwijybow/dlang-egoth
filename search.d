@@ -53,6 +53,32 @@ class Tree {
     }
 }
 
+int searchRoot(ref Tree t) {
+    int score;
+    int bound;
+    
+    /* look for the exact best score */
+    /* start to look for a win or a draw or a loss */
+    score = Scout(t, -1, +1);
+    if (score > 0) {
+        /* if a win look for a score between [+2 +8] */
+	bound = score + 8;
+	score = Scout(t, score, bound);
+	if (score >= bound) {
+	    /* failed -> look for a score between [+8, +64] */
+	    score = Scout(t, score, 64);
+	}
+    } else if (score < 0) {
+        /* if a loss look for a score between [-8 -2] */
+	bound = score - 8;
+	score = Scout(t, bound, score);
+	if (score <= bound) {
+	    /* failed -> look for a score between [-64, -8] */
+	    score = Scout(t, -64, score);
+	}
+    }
+    return score;
+}
 
 int Scout (ref Tree t, int alpha, int beta)
 {
