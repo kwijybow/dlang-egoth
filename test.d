@@ -1,6 +1,7 @@
 import std.stdio, std.string, std.array, std.conv;
 import search;
 import bitboard;
+import hash;
 
 
 struct test_result {
@@ -77,6 +78,8 @@ void performTest(ref Tree t) {
     int depth;
     string sq_name;
     string pvline;
+    bool ok = true;
+    int alpha, beta;
     
     depth = PopCnt(~(t.pos.black_stones | t.pos.white_stones));
     t.timer.start();
@@ -94,7 +97,7 @@ void performTest(ref Tree t) {
 //        if (i > 7) 
 //            break;
 //    }
-    writefln("| %3d | %3s | %3s | %8.2f | %12d | %6.0f |", depth, sq_name, t.pos.move_list[0][0].score, t.runtime,t.nodes_searched, (t.nodes_searched/1000)/t.runtime);
+    writefln("| %3d | %2s | %3s | %8.2f | %12d | %6.0f |", depth, sq_name, t.pos.move_list[0][0].score, t.runtime,t.nodes_searched, (t.nodes_searched/1000)/t.runtime);
 }
 
 void outputTestResults(ref TestResults ts) {

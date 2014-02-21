@@ -134,23 +134,23 @@ void hashStore (ref Position sp, int ctm, int type, int value, int ply, int dept
         draft = trans_ref_ba[index].word1>>34;
 //        age = trans_ref_ba[index].word1>>61;
 //        age=age && (age!=transposition_id);
-        if (ply<=draft) {
+//        if (ply<=draft) {
             trans_ref_ba[index].word1 = word1;
             trans_ref_ba[index].word2 = word2;
             trans_ref_ba[index].word3 = sp.black_stones;
             trans_ref_ba[index].word4 = sp.white_stones;
-        }
+//        }
     }
     else {
         draft = trans_ref_wa[index].word1>>34;
 //        age = trans_ref_wa[index].word1>>61;
 //        age=age && (age!=transposition_id);
-        if (ply<=draft) {
+//        if (ply<=draft) {
             trans_ref_wa[index].word1 = word1;
             trans_ref_wa[index].word2 = word2;
             trans_ref_wa[index].word3 = sp.black_stones;
             trans_ref_wa[index].word4 = sp.white_stones;
-        }
+//        }
     }
 }
 
@@ -182,7 +182,7 @@ int hashProbe (ref Position sp, int ctm, ref int alpha, ref int beta, int ply, i
         move = (word1l>>16)&255;
         draft = (word1l&65535)>>2;
         type = (word1l) & 03;
-        if (depth>draft) return(sp.worthless);
+//        if (depth>draft) return(sp.worthless);
 
         switch (type) {
         case sp.exact:
