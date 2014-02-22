@@ -71,28 +71,28 @@ int searchRoot(ref Tree t) {
     
     /* look for the exact best score */
     /* start to look for a win or a draw or a loss */
-    score = Scout(t, -1, +1, t.pv);
+    score = Scout(t, -1, +1);
     if (score > 0) {
         /* if a win look for a score between [+2 +8] */
 	bound = score + 8;
-	score = Scout(t, score, bound, t.pv);
+	score = Scout(t, score, bound);
 	if (score >= bound) {
 	    /* failed -> look for a score between [+8, +64] */
-	    score = Scout(t, score, 64, t.pv);
+	    score = Scout(t, score, 64);
 	}
     } else if (score < 0) {
         /* if a loss look for a score between [-8 -2] */
 	bound = score - 8;
-	score = Scout(t, bound, score, t.pv);
+	score = Scout(t, bound, score);
 	if (score <= bound) {
 	    /* failed -> look for a score between [-64, -8] */
-	    score = Scout(t, -64, score, t.pv);
+	    score = Scout(t, -64, score);
 	}
     }
     return score;
 }
 
-int Scout (ref Tree t, int alpha, int beta, ref PVline pline)
+int Scout (ref Tree t, int alpha, int beta)
 {
      int i;
      int b = t.neginf;
@@ -102,13 +102,11 @@ int Scout (ref Tree t, int alpha, int beta, ref PVline pline)
      int num_moves;
      int last_legal_count = 1;
      int best_move = t.passmove;
-     PVline line;
      
      
      switch (hashProbe(t.pos,t.pos.side_to_move,alpha,beta,t.pos.position_index,(t.maxdepth - t.pos.position_index),t.best_move)) {
          case t.pos.exact:
-//             pline.argmove[0] = t.best_move;
-//             pline.cmove = 1;
+//             t.pos.hashmove[t.pos.position_index] = t.best_move;
              return(alpha);
          case t.pos.lower:
              return(beta);
@@ -130,13 +128,12 @@ int Scout (ref Tree t, int alpha, int beta, ref PVline pline)
            t.pos.move_list[t.pos.position_index][0].sq_num = t.passmove;
            t.pos.move_list[t.pos.position_index][0].score = b;
            t.best_move = t.passmove;
-//           pline.cmove = 0;
            t.leaves_searched++;
            hashStore(t.pos,t.pos.side_to_move,t.pos.exact,b,t.pos.position_index,(t.maxdepth - t.pos.position_index),t.best_move);
            return b;
         } else {
            t.pos.makePass();
-           b = -Scout(t, -beta, -alpha, line);
+           b = -Scout(t, -beta, -alpha);
            t.pos.unmakePass();
            t.pos.move_list[t.pos.position_index][0].score = b;
            t.best_move = t.passmove;
@@ -144,7 +141,7 @@ int Scout (ref Tree t, int alpha, int beta, ref PVline pline)
         }
      }
      t.pos.makeMove(t.pos.move_list[t.pos.position_index][0]);
-     b = -Scout(t,-beta,-alpha, line);
+     b = -Scout(t,-beta,-alpha);
      t.pos.unmakeMove(t.pos.move_list[t.pos.position_index-1][0]);
      t.pos.move_list[t.pos.position_index][0].score = b;
      t.best_move = t.pos.move_list[t.pos.position_index][0].sq_num;
@@ -162,9 +159,9 @@ int Scout (ref Tree t, int alpha, int beta, ref PVline pline)
      i=1;
      while (i<t.pos.num_moves[t.pos.position_index]) {
          t.pos.makeMove(t.pos.move_list[t.pos.position_index][i]);
-         test = -Scout(t, -alpha-1, -alpha, line);
+         test = -Scout(t, -alpha-1, -alpha);
          if ((test > alpha) && (test < beta))
-             s = -Scout(t, -beta, -test, line);
+             s = -Scout(t, -beta, -test);
          t.pos.unmakeMove(t.pos.move_list[t.pos.position_index-1][i]);
          s = max(s, test);
          b = max(s, b);
@@ -187,10 +184,7 @@ int Scout (ref Tree t, int alpha, int beta, ref PVline pline)
          hashStore(t.pos,t.pos.side_to_move,t.pos.upper,b,t.pos.position_index,(t.maxdepth - t.pos.position_index),t.best_move);
      else {
          hashStore(t.pos,t.pos.side_to_move,t.pos.exact,b,t.pos.position_index,(t.maxdepth - t.pos.position_index),t.best_move);
-//         pline.argmove[0] = t.best_move;
-//         for (int arg=0; arg<line.cmove; arg++)
-//             pline.argmove[arg+1] = line.argmove[arg];
-//         pline.cmove = line.cmove + 1;
+         t.pos.hashmove[t.pos.position_index] = t.best_move;
      }
      return b;
 }
@@ -209,7 +203,7 @@ int MTDf(ref Tree t, int f)
             beta=g+1;
         else
             beta=g;
-        g=Scout(t,beta-1,beta, t.pv);
+        g=Scout(t,beta-1,beta);
         if (g<beta) 
             upper_bound=g;
         else 

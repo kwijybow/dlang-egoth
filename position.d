@@ -29,7 +29,7 @@ class Position {
     int killer3[128];
     int killer4[128];    
     int hashmove[128];
-    enum hashmove_bonus = 1024;
+    enum hashmove_bonus = 2000;
     enum killer1_bonus = 1000;
     enum killer2_bonus = 750;
     enum killer3_bonus = 500;
@@ -171,12 +171,18 @@ class Position {
     void generateRayMoves() {
         ulong one = 1;
         ulong some_flips;
-        int fromsq = 0;
-        int tosq = 0;
+        int fromsq = 64;
+        int tosq = 64;
+        int csq = 64;
         int move_index = 0;
         ulong astones, tstones;
         ulong potential, completer;
         ulong a_ray, test_ray;
+        int pot_count = 0;
+        int stab_count = 0;
+        ulong stab_mask;
+        ulong o_potential;
+        int score = 0;
         
         num_moves[position_index] = 0;
         if (side_to_move == black) { 
@@ -208,7 +214,35 @@ class Position {
                 move_list[position_index][move_index].sq_name = sqs.name(fromsq);
                 move_list[position_index][move_index].mask = (one << fromsq);
                 move_list[position_index][move_index].flips = some_flips;
-                move_list[position_index][move_index].score = sqs.see_value(fromsq) /* + (10*PopCnt(some_flips))*/;
+               
+//                makeMove(move_list[position_index][move_index]);
+//                score = evaluate(side_to_move);
+/*                if (side_to_move == white) {
+                    o_potential = s_test.genAdjMask(black_stones);
+                    o_potential ^= white_stones;
+                    pot_count = PopCnt(o_potential);
+                    stab_mask = black_stones & mask_test.corner;
+                    while (stab_mask) {
+                        csq = bsf(stab_mask);
+                        stab_mask &= stab_mask - 1;
+                        stab_count += PopCnt(sqs.adj_mask(csq) & black_stones);
+                    }
+                }
+                else {
+                    o_potential = s_test.genAdjMask(white_stones);
+                    o_potential ^= black_stones;
+                    pot_count = PopCnt(o_potential);
+                    stab_mask = white_stones & mask_test.corner;
+                    while (stab_mask) {
+                        csq = bsf(stab_mask);
+                        stab_mask &= stab_mask - 1;
+                        stab_count += PopCnt(sqs.adj_mask(csq) & white_stones);
+                    }
+                }
+*/                
+//                unmakeMove(move_list[position_index-1][move_index]);
+
+                move_list[position_index][move_index].score = /*-score;stab_count - (16*pot_count) + */sqs.see_value(fromsq);
                 if (fromsq == killer1[position_index])
                     move_list[position_index][move_index].score += killer1_bonus;
                 if (fromsq == killer2[position_index])
@@ -217,8 +251,8 @@ class Position {
                     move_list[position_index][move_index].score += killer3_bonus;
                 if (fromsq == killer4[position_index])
                     move_list[position_index][move_index].score += killer4_bonus;
-//                if (fromsq == hashmove[position_index])
-//                    move_list[position_index][move_index].score += hashmove_bonus;
+                if (fromsq == hashmove[position_index])
+                    move_list[position_index][move_index].score += hashmove_bonus;
                 move_index += 1;
             }
         }

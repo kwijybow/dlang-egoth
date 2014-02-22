@@ -32,8 +32,8 @@ class Masks {
                edge |= (b<<i);
       }
 
-      quiesce = (xsquare & corner & edge);
-      xsquare2 = xsquare ^ edge;
+      quiesce = (xsquare | corner | edge);
+      xsquare2 = xsquare | edge;
     
     }
 
