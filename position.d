@@ -251,8 +251,8 @@ class Position {
                     move_list[position_index][move_index].score += killer3_bonus;
                 if (fromsq == killer4[position_index])
                     move_list[position_index][move_index].score += killer4_bonus;
-                if (fromsq == hashmove[position_index])
-                    move_list[position_index][move_index].score += hashmove_bonus;
+//                if (fromsq == hashmove[position_index])
+//                    move_list[position_index][move_index].score += hashmove_bonus;
                 move_index += 1;
             }
         }

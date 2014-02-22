@@ -83,7 +83,7 @@ void performTest(ref Tree t) {
     
     depth = PopCnt(~(t.pos.black_stones | t.pos.white_stones));
     t.timer.start();
-    score = searchRoot(t); 
+    score = /*searchRoot(t);*/ MTDf(t,0); 
     t.pos.sortMoves();
     t.timer.stop();
     t.runtime = (t.timer.peek().msecs/1000.0);

@@ -184,7 +184,7 @@ int Scout (ref Tree t, int alpha, int beta)
          hashStore(t.pos,t.pos.side_to_move,t.pos.upper,b,t.pos.position_index,(t.maxdepth - t.pos.position_index),t.best_move);
      else {
          hashStore(t.pos,t.pos.side_to_move,t.pos.exact,b,t.pos.position_index,(t.maxdepth - t.pos.position_index),t.best_move);
-         t.pos.hashmove[t.pos.position_index] = t.best_move;
+//         t.pos.hashmove[t.pos.position_index] = t.best_move;
      }
      return b;
 }
@@ -211,3 +211,4 @@ int MTDf(ref Tree t, int f)
     } while (!(lower_bound>=upper_bound));
     return g;
 }
+
